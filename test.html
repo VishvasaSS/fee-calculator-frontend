@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fee Calculator</title>
+    <style>
+        /* --- CSS Styles --- */
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+            --light-bg: #f8f9fa;
+            --dark-bg: #e9ecef;
+            --text-color: #343a40;
+            --border-color: #dee2e6;
+            --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.12);
+            --transition-speed: 0.3s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--light-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+            line-height: 1.6;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            transition: box-shadow var(--transition-speed);
+        }
+
+        .container:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        h2 {
+            color: var(--primary-dark);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            letter-spacing: 0.5px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background-color: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1em;
+            color: var(--text-color);
+            background-color: #fff;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        .form-group input[type="number"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color var(--transition-speed), transform 0.2s ease;
+            box-shadow: var(--shadow-light);
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        #result-display {
+            margin-top: 30px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-size: 1em;
+            min-height: 50px; /* Ensure some height even when empty */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            word-break: break-all; /* Handle long messages */
+        }
+
+        .message.success {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .message.error {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        .message.info {
+            color: var(--info-color);
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Fee Calculator</h2>
+
+        <div class="form-group">
+            <label for="baseAmount">Base Amount:</label>
+            <input type="number" id="baseAmount" step="0.01" value="100.00" required>
+        </div>
+
+        <div class="form-group">
+            <label for="percentage">Percentage (%):</label>
+            <input type="number" id="percentage" step="0.01" value="10.00" min="0.01" max="100.00" required>
+        </div>
+
+        <button id="calculateFeeBtn">Calculate Fee & Store</button>
+
+        <div id="result-display">
+            <span class="message info">Enter values and click "Calculate Fee & Store".</span>
+        </div>
+    </div>
+
+    <script>
+        /* --- JavaScript Code --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            const baseAmountInput = document.getElementById('baseAmount');
+            const percentageInput = document.getElementById('percentage');
+            const calculateFeeBtn = document.getElementById('calculateFeeBtn');
+            const resultDisplay = document.getElementById('result-display');
+
+            // IMPORTANT: Replace this with the actual URL of your deployed Java backend API
+            // For local testing, it might be something like 'http://localhost:8080/api/calculateFee'
+            // After deployment, it will be the public URL of your Java service.
+            const API_ENDPOINT = 'http://localhost:8080/api/calculateFee'; // Placeholder URL
+
+            /**
+             * Displays a message in the result display area.
+             * @param {string} message - The message to display.
+             * @param {string} type - 'success', 'error', or 'info' for styling.
+             */
+            function displayResult(message, type = 'info') {
+                resultDisplay.innerHTML = ''; // Clear previous content
+                const messageSpan = document.createElement('span');
+                messageSpan.className = `message ${type}`;
+                messageSpan.textContent = message;
+                resultDisplay.appendChild(messageSpan);
+            }
+
+            /**
+             * Shows a loading spinner.
+             */
+            function showLoading() {
+                resultDisplay.innerHTML = '<span class="spinner"></span> <span class="message info">Calculating and storing...</span>';
+            }
+
+            /**
+             * Handles the calculation and storage request.
+             */
+            calculateFeeBtn.addEventListener('click', async () => {
+                const baseAmount = parseFloat(baseAmountInput.value);
+                const percentage = parseFloat(percentageInput.value);
+
+                // Basic client-side validation
+                if (isNaN(baseAmount) || isNaN(percentage) || baseAmount < 0 || percentage < 0.01 || percentage > 100) {
+                    displayResult('Please enter valid positive numbers for Base Amount and Percentage (0.01-100).', 'error');
+                    return;
+                }
+
+                showLoading();
+                calculateFeeBtn.disabled = true; // Disable button during request
+
+                try {
+                    const response = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json' // Request JSON response
+                        },
+                        body: JSON.stringify({
+                            baseAmount: baseAmount,
+                            percentage: percentage
+                        })
+                    });
+
+                    if (!response.ok) {
+                        // Handle HTTP errors
+                        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                        throw new Error(`API Error: ${response.status} - ${errorData.message || response.statusText}`);
+                    }
+
+                    const data = await response.json(); // Parse the JSON response
+
+                    if (data.calculatedFee !== undefined && data.id !== undefined) {
+                        displayResult(
+                            `Calculated Fee: ${data.calculatedFee.toFixed(2)} | Stored ID: ${data.id}`,
+                            'success'
+                        );
+                        console.log('API Response:', data); // Log the full response to console
+                    } else {
+                        displayResult('Unexpected API response format.', 'error');
+                        console.error('Unexpected API response:', data);
+                    }
+
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    displayResult(`Failed to calculate fee: ${error.message}`, 'error');
+                } finally {
+                    calculateFeeBtn.disabled = false; // Re-enable button
+                }
+            });
+        });
+    </script>
+</body>
+</html>
